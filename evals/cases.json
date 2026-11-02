@@ -1,0 +1,261 @@
+[
+  {
+    "id": "py-eval",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/app.py",
+      "@@ -0,0 +1,2 @@",
+      "+def run(user_input):",
+      "+    return eval(user_input)"
+    ],
+    "expected": [
+      {"file": "app.py", "line": 2, "category": "security", "severity": "critical", "note": "eval() on untrusted input"}
+    ],
+    "notes": "Classic arbitrary-code-execution risk."
+  },
+  {
+    "id": "py-hardcoded-secret",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/billing.py",
+      "@@ -0,0 +1,4 @@",
+      "+API_KEY = \"sk_live_51H8xQ2eZvKYlo2C\"",
+      "+",
+      "+def get_key():",
+      "+    return API_KEY"
+    ],
+    "expected": [
+      {"file": "billing.py", "line": 1, "category": "security", "severity": "high", "note": "hardcoded credential"}
+    ],
+    "notes": "Secret committed in source."
+  },
+  {
+    "id": "py-sql-injection",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/users.py",
+      "@@ -0,0 +1,3 @@",
+      "+def find_user(cursor, name):",
+      "+    query = \"SELECT * FROM users WHERE name = '\" + name + \"'\"",
+      "+    cursor.execute(query)"
+    ],
+    "expected": [
+      {"file": "users.py", "line": 2, "category": "security", "severity": "critical", "note": "string-concatenated SQL"}
+    ],
+    "notes": "SQL injection via concatenation; parameterised query expected."
+  },
+  {
+    "id": "py-mutable-default",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/cart.py",
+      "@@ -0,0 +1,3 @@",
+      "+def add_item(item, items=[]):",
+      "+    items.append(item)",
+      "+    return items"
+    ],
+    "expected": [
+      {"file": "cart.py", "line": 1, "category": "bug", "severity": "medium", "note": "mutable default argument shared across calls"}
+    ],
+    "notes": "The default list is created once and reused."
+  },
+  {
+    "id": "py-bare-except",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/parse.py",
+      "@@ -0,0 +1,5 @@",
+      "+def parse(value):",
+      "+    try:",
+      "+        return int(value)",
+      "+    except:",
+      "+        return None"
+    ],
+    "expected": [
+      {"file": "parse.py", "line": 4, "category": "maintainability", "severity": "medium", "note": "bare except hides every error"}
+    ],
+    "notes": "Catches even KeyboardInterrupt/SystemExit."
+  },
+  {
+    "id": "py-pickle",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/cache.py",
+      "@@ -0,0 +1,4 @@",
+      "+import pickle",
+      "+",
+      "+def load(data):",
+      "+    return pickle.loads(data)"
+    ],
+    "expected": [
+      {"file": "cache.py", "line": 4, "category": "security", "severity": "high", "note": "untrusted pickle deserialisation"}
+    ],
+    "notes": "pickle can execute code while unpickling."
+  },
+  {
+    "id": "py-shell-injection",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/net.py",
+      "@@ -0,0 +1,4 @@",
+      "+import subprocess",
+      "+",
+      "+def ping(host):",
+      "+    subprocess.run(\"ping -c 1 \" + host, shell=True)"
+    ],
+    "expected": [
+      {"file": "net.py", "line": 4, "category": "security", "severity": "critical", "note": "shell=True with untrusted input"}
+    ],
+    "notes": "Command injection; use a list of arguments and shell=False."
+  },
+  {
+    "id": "py-open-without-with",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/files.py",
+      "@@ -0,0 +1,3 @@",
+      "+def read(path):",
+      "+    f = open(path)",
+      "+    return f.read()"
+    ],
+    "expected": [
+      {"file": "files.py", "line": 2, "category": "bug", "severity": "medium", "note": "file handle never closed"}
+    ],
+    "notes": "Use a context manager."
+  },
+  {
+    "id": "js-xss",
+    "language": "javascript",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/app.js",
+      "@@ -0,0 +1,3 @@",
+      "+function show(name) {",
+      "+  document.getElementById(\"out\").innerHTML = \"<b>\" + name + \"</b>\";",
+      "+}"
+    ],
+    "expected": [
+      {"file": "app.js", "line": 2, "category": "security", "severity": "high", "note": "innerHTML with untrusted input"}
+    ],
+    "notes": "DOM XSS; use textContent or escaping."
+  },
+  {
+    "id": "js-missing-await",
+    "language": "javascript",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/fetch.js",
+      "@@ -0,0 +1,4 @@",
+      "+async function load(url) {",
+      "+  const res = fetch(url);",
+      "+  return res.json();",
+      "+}"
+    ],
+    "expected": [
+      {"file": "fetch.js", "line": 2, "category": "bug", "severity": "high", "note": "await missing before fetch"}
+    ],
+    "notes": "res is a Promise, so res.json is not available."
+  },
+  {
+    "id": "java-sql-injection",
+    "language": "java",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/UserDao.java",
+      "@@ -0,0 +1,4 @@",
+      "+public User find(String name) {",
+      "+    String sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";",
+      "+    return jdbc.queryForObject(sql, User.class);",
+      "+}"
+    ],
+    "expected": [
+      {"file": "UserDao.java", "line": 2, "category": "security", "severity": "critical", "note": "SQL injection via concatenation"}
+    ],
+    "notes": "Use PreparedStatement."
+  },
+  {
+    "id": "java-string-equality",
+    "language": "java",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/Auth.java",
+      "@@ -0,0 +1,3 @@",
+      "+public boolean isAdmin(String role) {",
+      "+    return role == \"admin\";",
+      "+}"
+    ],
+    "expected": [
+      {"file": "Auth.java", "line": 2, "category": "bug", "severity": "high", "note": "== compares references, not string values"}
+    ],
+    "notes": "Should use \"admin\".equals(role)."
+  },
+  {
+    "id": "java-unclosed-resource",
+    "language": "java",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/Files.java",
+      "@@ -0,0 +1,4 @@",
+      "+public String read(File file) throws IOException {",
+      "+    FileInputStream in = new FileInputStream(file);",
+      "+    return new String(in.readAllBytes());",
+      "+}"
+    ],
+    "expected": [
+      {"file": "Files.java", "line": 2, "category": "bug", "severity": "medium", "note": "stream never closed"}
+    ],
+    "notes": "Use try-with-resources."
+  },
+  {
+    "id": "py-divide-by-zero",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/stats.py",
+      "@@ -0,0 +1,2 @@",
+      "+def average(values):",
+      "+    return sum(values) / len(values)"
+    ],
+    "expected": [
+      {"file": "stats.py", "line": 2, "category": "bug", "severity": "medium", "note": "empty input raises ZeroDivisionError"}
+    ],
+    "notes": "No guard for an empty list."
+  },
+  {
+    "id": "py-todo",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/totals.py",
+      "@@ -0,0 +1,3 @@",
+      "+def total(values):",
+      "+    # TODO: handle empty input",
+      "+    return sum(values)"
+    ],
+    "expected": [
+      {"file": "totals.py", "line": 2, "category": "maintainability", "severity": "info", "note": "unresolved TODO in new code"}
+    ],
+    "notes": "Deliberately easy case; the mock catches it."
+  },
+  {
+    "id": "clean-no-findings",
+    "language": "python",
+    "diff_lines": [
+      "--- /dev/null",
+      "+++ b/math.py",
+      "@@ -0,0 +1,2 @@",
+      "+def add(a, b):",
+      "+    return a + b"
+    ],
+    "expected": [],
+    "notes": "Precision anchor: a correct reviewer should stay quiet."
+  }
+]

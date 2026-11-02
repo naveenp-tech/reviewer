@@ -12,10 +12,10 @@ contract, the provider abstraction, and the tests.
 - [x] Typed request/response schemas (Pydantic)
 - [x] Provider abstraction + offline mock provider
 - [x] Gemini provider with structured output
-- [x] Tests for the parser and the API
+- [x] Tests for the parser, the API, and the eval matcher
+- [x] Evaluation harness with 16 labelled diffs
 - [ ] Repo context retrieval
 - [ ] Tool execution (linters/tests) in a sandbox
-- [ ] Evaluation harness with labelled diffs
 - [ ] GitHub Action
 - [ ] Observability (tokens, latency, cost)
 
@@ -69,12 +69,47 @@ It is a deterministic heuristic, not a model call.
 The model is forced to answer with the `LLMReview` schema, so the response is
 validated JSON rather than free text.
 
+## Evals
+
+Quality is measured, not assumed. `evals/cases.json` holds 16 small diffs
+(Python, JavaScript, Java) with known findings, plus one clean diff that must
+produce no findings.
+
+```bash
+python -m evals.run --provider mock            # offline baseline
+python -m evals.run --provider gemini          # real model
+python -m evals.run --provider gemini --verbose
+python -m evals.run --only py-eval,py-todo     # subset
+python -m evals.run --json                     # evals/results/latest.json
+```
+
+Matching rules: same file + category, line within ±2. Severity is reported
+separately. See `evals/README.md` for the full protocol and limitations.
+
+Mock baseline (deliberately weak — it only spots `eval(` and `TODO`):
+
+| Metric | Value |
+|---|---|
+| Cases | 16 |
+| Expected findings | 15 |
+| TP / FP / FN | 2 / 0 / 13 |
+| Precision | 1.000 |
+| Recall | 0.133 |
+| F1 | 0.235 |
+| Clean diff stayed silent | yes |
+
+That is the number Gemini has to beat. Re-run the same command after switching
+providers and compare, rather than judging a review by how plausible it reads.
+
 ## Tests
 
 ```bash
 python -m pytest -q
 python -m ruff check .
 ```
+
+The suite also tests the eval matcher (`tests/test_evals.py`), so a bug in the
+scoring cannot silently inflate the numbers.
 
 ## Design decisions
 
@@ -102,5 +137,10 @@ app/
     └── gemini.py    structured-output Gemini provider
 tests/
 ├── test_diff.py
-└── test_api.py
+├── test_api.py
+└── test_evals.py
+evals/
+├── cases.json       labelled diffs
+├── run.py           scorer CLI
+└── README.md        matching rules and limitations
 ```
